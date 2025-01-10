@@ -1,0 +1,90 @@
+% clear all; close all;
+% cd('C:\Users\mawebr\Desktop\MatLab - Master Folder\Matlab Code Directory') % this is where the matlab code is located
+% data_source = 'D:\BehaviorDataSync\Data';
+% local_data = 'G:\Switch_Analysis\Behav_dat'; % this is where the MedPC file is located
+% local_data = 'G:\Switch_Analysis\Behav_dat_early';
+% local_data = 'E:\Ephys_Experiments_MSNs\For_Kumar_10_16\Behav_Dat';
+% local_data = 'G:\Switch_Analysis\Behav_dat_late';
+% local_data = 'F:\Switch_Analysis\Behav_dat_saline';
+% local_data = 'F:\Switch_Analysis\Behav_dat_sulp';
+% local_data = 'G:\Switch_Analysis\Behav_dat_sch';
+local_data = 'E:\Ephys_Experiments_MSNs\For_Kumar_10_16\Behav_dat';
+
+
+if exist(fullfile(local_data,'getAnProfile.m'), 'file') == 2
+    currentFolder = cd(local_data);
+    [MSN, idMatch, dateRange, group] = getAnProfile();
+    cd(currentFolder);
+else
+    % MSN spcify MSN or make it empty
+%     MSN = {'Ben_Switch_6L18R_SHORTviITI' 'Ben_Switch_18L6R_SHORTviITI'};
+    MSN = []
+    % MSN = []; % code will ask MSN to specify
+
+    % ID if animal ID is LETTER + Number like MAW12 add MAW\d+
+%      idMatch = '(ER\d+|EP\d+|ep\d+|Ep\d+)'; 
+%     idMatch = '(TL\d+|AB\d+)'
+%     idMatch = '(w+\SULP|w+)';
+    
+    %idMatch = '(PB11|PB12|PB\d{1})'; 
+    %idMatch = '(PB11|PB12|PB[1-9])'; 
+    
+    % or you can specify exact animal ID
+    % idMatch = {'MAW14' 'MAW15'}; 
+    % or make it empty
+    idMatch =[];
+
+    % Date specify start date if put one date or make it empty to analyze all
+    % dateRange = {'2019-07-21'}; 
+    dateRange = {'2019-07-21' '2020-10-28'}; % specify start/end date if put two dates
+%     group = {};
+    
+    group.Early = {... 
+        {'08/07/19'; 'EP4'} ...
+        {'09/26/19'; 'EP5'} ...
+        {'09/21/19'; 'EP8'} ...
+        {'04/07/20'; 'ER3'} ...
+        {'04/08/20'; 'ER3'} ...
+        {'04/09/20'; 'ER4'} ... 
+        {'04/10/20'; 'ER4'} ...
+        {'04/08/20'; 'ER5'} ...
+        };
+
+    group.Late = {...
+        {'09/19/19'; 'EP4'} ...
+        {'09/25/19'; 'EP4'} ...
+        {'10/06/19'; 'EP5'} ...
+        {'10/06/19'; 'EP8'} ...
+        {'11/06/19'; 'EP8'} ...
+        {'04/19/20'; 'ER3'} ...
+        {'04/20/20'; 'ER4'} ... 
+        {'04/21/20'; 'ER4'} ...
+        {'04/18/20'; 'ER5'} ...
+        {'04/19/20'; 'ER5'} ...
+};
+ 
+    
+end
+% exclude_crit = {'MAW14' '06/01/19'; 'MAW15' '06/27/19'}; % add animal ID and date with ';' in cell if want to exclude some sessions
+% exclude_crit = {'ER4' '04/11/20'; 'ER3' '04/19/20'; 'ER5' '04/19/20'}
+% %for sulp
+% exclude_crit = {'ER4' '04/10/20', 'ER3' '04/11/20', 'ER3' '04/16/20', 'ER5' '04/11/20', 'ER5' '04/16/20'}; %exclude for saline
+% exclude_crit = {'ER3' '04/09/20', 'ER3' '04/10/20','ER5' '04/09/20', 'ER5' '04/10/20', 'EC1' '04/09/20', 'EC1' '04/10/20'}; %exclude for early
+exclude_crit = {}
+
+if exist('data_source','var')
+    copyUpdatedData(data_source, local_data, MSN, idMatch, dateRange);
+end
+
+mpcParsed = getDataIntr(local_data, MSN, idMatch, dateRange);
+TrialAnSt = getTrialData(mpcParsed);
+
+if exist('exclude_crit','var')
+    TrialAnSt = exclude_session(TrialAnSt, exclude_crit);
+end
+% Function to parse out and plot each animal across each day
+saveFolder = sprintf('%s', date); mkdir(local_data, saveFolder); savefolder_name = fullfile(local_data, saveFolder);
+
+SessionAnSt = plotSession(TrialAnSt, savefolder_name);
+PooledAnSt = plotPooled(TrialAnSt, savefolder_name);
+% GroupAnSt = plotGroup(TrialAnSt, group);
